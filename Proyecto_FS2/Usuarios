@@ -1,0 +1,225 @@
+Controllers
+      UsuarioRepository (interface)
+          package com.proyecto._d.springbootcrud.springboot_crud_Usuarios.controllers;
+
+          import org.springframework.data.repository.CrudRepository;
+
+          import com.proyecto._d.springbootcrud.springboot_crud_Usuarios.entities.Usuario;
+          
+          public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
+
+          }
+
+    UsuarioRestController (class)
+          package com.proyecto._d.springbootcrud.springboot_crud_Usuarios.controllers;
+
+          import java.util.List;
+          import java.util.Optional;
+          
+          import org.springframework.beans.factory.annotation.Autowired;
+          import org.springframework.http.HttpStatus;
+          import org.springframework.http.ResponseEntity;
+          import org.springframework.web.bind.annotation.DeleteMapping;
+          import org.springframework.web.bind.annotation.GetMapping;
+          import org.springframework.web.bind.annotation.PathVariable;
+          import org.springframework.web.bind.annotation.PostMapping;
+          import org.springframework.web.bind.annotation.PutMapping;
+          import org.springframework.web.bind.annotation.RequestBody;
+          import org.springframework.web.bind.annotation.RequestMapping;
+          import org.springframework.web.bind.annotation.RestController;
+          
+          import com.proyecto._d.springbootcrud.springboot_crud_Usuarios.entities.Usuario;
+          import com.proyecto._d.springbootcrud.springboot_crud_Usuarios.services.UsuarioService;
+          
+          @RestController
+          @RequestMapping("/api/usuarios")
+          public class UsuarioRestController {
+              @Autowired
+              private UsuarioService service;
+          
+              @GetMapping
+              public List<Usuario> listarUsuarios() {
+                  return service.findByAll();
+              }
+          
+              @GetMapping("/{id}")
+              public ResponseEntity<?> verUsuario (@PathVariable long id){
+                  Optional<Usuario> usuarioOptional = service.findById(id);
+                  if(usuarioOptional.isPresent()){
+                      return ResponseEntity.ok(usuarioOptional.orElseThrow());
+                  }
+                  return ResponseEntity.notFound().build();
+              }
+          
+              @PostMapping
+              public ResponseEntity<Usuario> crearUsuario(@RequestBody Usuario unUsuario) {
+                  return ResponseEntity.status(HttpStatus.CREATED).body(service.save(unUsuario));
+              }
+          
+              @PutMapping("/{id}")
+              public ResponseEntity<Usuario> modificarUsuario(@PathVariable Long id, @RequestBody Usuario unUsuario) {
+                  Optional <Usuario> usuarioOptional= service.findById(id);
+                  if (usuarioOptional.isPresent()) {
+                      Usuario usuarioexist = usuarioOptional.get();
+                      usuarioexist.setNombre(unUsuario.getNombre());
+                      usuarioexist.setCorreo(unUsuario.getCorreo());
+                      usuarioexist.setRol(unUsuario.getRol());
+                      Usuario usuariobrandnew = service.save(usuarioexist);
+                      return ResponseEntity.ok(usuariobrandnew);
+                  }
+                  return ResponseEntity.notFound().build();
+              }
+              @DeleteMapping("/{id}")
+              public ResponseEntity<?> eliminar (@PathVariable Long id){
+                  Usuario unUsuario = new Usuario();
+                  unUsuario.setId(id);
+                  Optional<Usuario> usuarioOptional = service.delete(unUsuario);
+                  if (usuarioOptional.isPresent()){
+                      return ResponseEntity.ok(usuarioOptional.orElseThrow());
+                  }
+                  return ResponseEntity.notFound().build();
+              }
+              }
+
+Entities
+    Usuario (class)
+        package com.proyecto._d.springbootcrud.springboot_crud_Usuarios.entities;
+    
+        import jakarta.persistence.Entity;
+        import jakarta.persistence.GeneratedValue;
+        import jakarta.persistence.GenerationType;
+        import jakarta.persistence.Id;
+        
+        @Entity
+        public class Usuario {
+            @Id
+            @GeneratedValue(strategy = GenerationType.IDENTITY)
+            private Long id;
+        
+            private String nombre;
+            private String contraseña;
+            private String correo;
+            private String rol;
+            public Long getId() {
+                return id;
+            }
+            public void setId(Long id) {
+                this.id = id;
+            }
+            public String getNombre() {
+                return nombre;
+            }
+            public void setNombre(String nombre) {
+                this.nombre = nombre;
+            }
+            public String getContraseña() {
+                return contraseña;
+            }
+            public void setContraseña(String contraseña) {
+                this.contraseña = contraseña;
+            }
+            public String getCorreo() {
+                return correo;
+            }
+            public void setCorreo(String correo) {
+                this.correo = correo;
+            }
+            public String getRol() {
+                return rol;
+            }
+            public void setRol(String rol) {
+                this.rol = rol;
+            }
+            public Usuario(Long id, String nombre, String contraseña, String correo, String rol) {
+                this.id = id;
+                this.nombre = nombre;
+                this.contraseña = contraseña;
+                this.correo = correo;
+                this.rol = rol;
+            }
+            public Usuario(){
+        
+            }
+            
+        }
+Services
+    UsuarioService (interface)
+        package com.proyecto._d.springbootcrud.springboot_crud_Usuarios.services;
+
+        import java.util.List;
+        import java.util.Optional;
+
+        import com.proyecto._d.springbootcrud.springboot_crud_Usuarios.entities.Usuario;
+
+        public interface UsuarioService {
+            List<Usuario> findByAll();
+            
+            Optional<Usuario> findById(Long id);
+        
+            Usuario save(Usuario unUsuario);
+        
+            Optional<Usuario> delete(Usuario unUsuario);
+            
+        }
+  UsuarioServiceImpl (class)
+        !!(recordar crear la clase, implementar a UsuarioService y luego dar click derecho, Source Actions
+         y finalmente seleccionar los metodos de la interface UsuarioSerive los cuales deberian
+         venir por default)!!
+
+        package com.proyecto._d.springbootcrud.springboot_crud_Usuarios.services;
+  
+        import java.util.List;
+        import java.util.Optional;
+        
+        import org.springframework.beans.factory.annotation.Autowired;
+        import org.springframework.stereotype.Service;
+        import org.springframework.transaction.annotation.Transactional;
+        
+        import com.proyecto._d.springbootcrud.springboot_crud_Usuarios.controllers.UsuarioRepository;
+        import com.proyecto._d.springbootcrud.springboot_crud_Usuarios.entities.Usuario;
+        @Service
+        public class UsuarioServiceImpl implements UsuarioService {
+            @Autowired
+            private UsuarioRepository repository;
+        
+            @Override
+            @Transactional(readOnly = true)
+            public List<Usuario> findByAll() {
+                return (List<Usuario>) repository.findAll();
+            }
+            @Override
+            @Transactional(readOnly = true)
+            public Optional<Usuario> findById(Long id) {
+                return repository.findById(id);
+            }
+            @Override
+            public Usuario save(Usuario unUsuario) {
+                return repository.save(unUsuario);
+            }
+            @Override
+            public Optional<Usuario> delete(Usuario unUsuario) {
+                Optional<Usuario> usuarioOptional = repository.findById(unUsuario.getId());
+                usuarioOptional.ifPresent(usuarioDb ->{
+                    repository.delete(unUsuario);
+                });
+                return usuarioOptional;
+            }
+        
+        
+            
+        }
+
+Aplication Properties
+        spring.application.name=springboot_crud
+        #parametros de conexion
+        spring.datasource.url=jdbc:mysql://localhost:3306//*(nombrebasededatabase)*/?serverTimezone=UTC&useSSL=false
+        spring.datasource.username=root
+        spring.datasource.password=
+        
+        #configuracion de JPA
+        spring.jpa.hibernate.ddl-auto=update
+        spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
+        
+        # Configuracion de logs (opcional)
+        spring.jpa.show-sql=true
+        spring.jpa.properties.hibernate.format_sql=true
